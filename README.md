@@ -2,6 +2,8 @@
 
 A parameterized dual-clock asynchronous FIFO in Verilog, using Gray-coded pointers and double-flop synchronizers for safe clock-domain crossing between an independent write clock and read clock.
 
+This project was built after studying how dual-clock async FIFOs work, referencing [this writeup](https://www.verilogpro.com/asynchronous-fifo-design/).
+
 ## Parameters
 
 | Parameter | Value | Meaning |
@@ -27,6 +29,8 @@ Crossing data between two clock domains that have no fixed phase relationship is
 - **`sync_w2r`** — double-flop synchronizer bringing the Gray write pointer into the read clock domain
 - **`async_fifo_top`** — top-level integration of all of the above
 
+All modules are in `RTL/`.
+
 ## The Math Behind Full and Empty Flags
 
 With Gray-coded pointers of width `ASIZE+1` (one extra MSB beyond the address bits):
@@ -39,7 +43,8 @@ Binary → Gray conversion (`gray = binary ^ (binary >> 1)`) ensures adjacent co
 
 ## Verification
 
-7 self-checking test cases exercising:
+7 self-checking test cases, each in its own folder under `Simulation/`, exercising:
+
 1. Basic write/read at matched throughput
 2. Full-flag assertion when FIFO is at capacity
 3. Empty-flag assertion when FIFO is drained
@@ -50,44 +55,25 @@ Binary → Gray conversion (`gray = binary ^ (binary >> 1)`) ensures adjacent co
 
 ## Synthesis & Implementation
 
-- Tool: Vivado 2020+ (specify your exact version in the report)
+- Tool: Vivado 2020+
 - Target: Xilinx Artix-7
-- Include utilization and timing closure numbers once generated (see `impl/reports/`)
+- Reports and screenshots (utilization, timing summary, power) are in `Synthesis and Implementation/`
 
 ## Repository Structure
 
 ```
-dual-clock-async-fifo/
+Dual-Clock-Asynchronous-FIFO/
 ├── README.md
-├── rtl/
-│   ├── fifomem.v
-│   ├── wptr_full.v
-│   ├── rptr_empty.v
-│   ├── sync_r2w.v
-│   ├── sync_w2r.v
-│   └── async_fifo_top.v
 │
-├── sim/
-│   ├── tb_async_fifo.v               # Or split per-case if you prefer
-│   ├── waveforms/                    # Screenshots per test case (1-7 above)
-│   └── logs/                         # Console pass/fail transcripts
+├── RTL/                                 # Design source: fifomem, wptr_full, rptr_empty,
+│                                        # sync_r2w, sync_w2r, and the top-level integration
 │
-├── synth/
-│   ├── constraints/
-│   │   └── async_fifo.xdc
-│   └── reports/
-│       └── utilization_synth.rpt
+├── Simulation/                         # One folder per test case (1-7 above), each with
+│                                        # its testbench, a .mem file (if used), and an
+│                                        # explanation file describing what's being tested
 │
-├── impl/
-│   ├── reports/
-│   │   ├── utilization_impl.rpt
-│   │   └── timing_summary_impl.rpt
-│   └── screenshots/
-│       └── routed_device_view.png
+├── Constraint File/                    # .xdc timing/pin constraints
 │
-└── docs/
-    └── gray_code_full_empty_derivation.md   # Optional: the math writeup above, expanded
-```
-
-### Notes on ordering
-Same flow as the CPU project: `rtl/` → `sim/` → `synth/` → `impl/`. Since this is a smaller, well-contained module, you could also flatten `sim/waveforms` and `sim/logs` directly under `sim/` if you have only a handful of screenshots — don't over-nest a small project.
+└── Synthesis and Implementation/       # Vivado synthesis + place-and-route outputs:
+                                         # utilization reports, timing summary,
+                                         # power report, routed device screenshots
